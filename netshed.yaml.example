@@ -1,0 +1,6 @@
+networks:
+  - name: "vm0"
+    type: "bridge"
+    subnet: 10.0.1.0/24
+    gateway: "10.0.1.254/24"
+    masquerade: true

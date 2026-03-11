@@ -1,0 +1,15 @@
+containers:
+  web:
+    rootfs: /var/local/procshed/rootfs/bookworm
+    command: /bin/sleep infinity
+    hostname: web
+    networks:
+      - bridge: vm0
+        address: 10.0.1.1/24
+  app:
+    rootfs: /var/local/procshed/rootfs/bookworm
+    command: /bin/sleep infinity
+    hostname: app
+    networks:
+      - bridge: vm0
+        address: 10.0.1.2/24
