@@ -160,26 +160,30 @@ func getProcessStartTime(pid int) (uint64, error) {
 		return 0, err
 	}
 
-	// /proc/<pid>/stat format: pid (comm) state fields...
-	// Field 22 (1-indexed) is starttime. Find the closing ')' of comm
-	// first, since comm can contain spaces and parentheses.
-	content := string(data)
+	return parseStartTime(string(data))
+}
+
+// parseStartTime extracts the start time (field 22) from the content
+// of /proc/<pid>/stat. The comm field (field 2) is enclosed in
+// parentheses and may contain spaces, parentheses, and other
+// characters, so parsing starts from the last ')'.
+func parseStartTime(content string) (uint64, error) {
 	closeParen := strings.LastIndex(content, ")")
 	if closeParen < 0 {
-		return 0, fmt.Errorf("unexpected format in /proc/%d/stat", pid)
+		return 0, fmt.Errorf("unexpected format in proc stat: no closing parenthesis")
 	}
 
 	// Fields after ") " start at field 3
 	fields := strings.Fields(content[closeParen+2:])
 	if len(fields) < 20 {
-		return 0, fmt.Errorf("not enough fields in /proc/%d/stat", pid)
+		return 0, fmt.Errorf("not enough fields in proc stat: got %d, need 20", len(fields))
 	}
 
 	// starttime is field 22 overall, which is index 19 in the fields after ")"
 	// (fields after ")" start at field 3, so field 22 = index 22-3 = 19)
 	startTime, err := strconv.ParseUint(fields[19], 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("parsing starttime from /proc/%d/stat: %w", pid, err)
+		return 0, fmt.Errorf("parsing starttime: %w", err)
 	}
 
 	return startTime, nil
