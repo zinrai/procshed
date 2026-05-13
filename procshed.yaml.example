@@ -13,3 +13,9 @@ containers:
     networks:
       - bridge: vm0
         address: 10.0.1.2/24
+  raw:
+    rootfs: /var/local/procshed/rootfs/bookworm
+    command: /bin/sleep infinity
+    hostname: raw
+    networks:
+      - bridge: vm0

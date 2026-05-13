@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/goccy/go-yaml"
+	"github.com/vishvananda/netlink"
 )
 
 type Config struct {
@@ -67,8 +68,10 @@ func validateConfig(cfg *Config) error {
 			if net.Bridge == "" {
 				return fmt.Errorf("container %s: networks[%d].bridge is required", name, i)
 			}
-			if net.Address == "" {
-				return fmt.Errorf("container %s: networks[%d].address is required", name, i)
+			if net.Address != "" {
+				if _, err := netlink.ParseAddr(net.Address); err != nil {
+					return fmt.Errorf("container %s: networks[%d].address %q: %w", name, i, net.Address, err)
+				}
 			}
 		}
 	}

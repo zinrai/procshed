@@ -31,7 +31,7 @@ $ sudo netshed create -config netshed.yaml.example
 
 ### 3. Create containers
 
-`procshed.yaml.example` defines two containers connected to the bridge:
+`procshed.yaml.example` defines three containers connected to the bridge. Two are assigned static IP addresses; one is attached without an IP address.
 
 ```bash
 $ sudo procshed create -config procshed.yaml.example
@@ -67,7 +67,20 @@ $ sudo netshed delete -config netshed.yaml.example
 | hostname | no | Container hostname (defaults to container name) |
 | networks | no | List of network connections |
 | networks[].bridge | yes | Existing bridge to connect to |
-| networks[].address | yes | IP address in CIDR notation |
+| networks[].address | no | IP address in CIDR notation. If omitted, the interface is brought up without an address or default route |
+
+### Network without IP assignment
+
+To attach a container to a bridge without assigning an IP address, omit the `address` field. The veth pair is created and brought up, but no address or default route is configured inside the container. This is useful when the container is expected to assign its own address from inside (for example, from the `command` itself).
+
+```yaml
+containers:
+  raw:
+    rootfs: /var/local/procshed/rootfs/bookworm
+    command: /bin/sleep infinity
+    networks:
+      - bridge: vm0
+```
 
 ## License
 

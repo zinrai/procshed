@@ -19,13 +19,19 @@ func VethName(containerName string, index int) string {
 }
 
 // NetworkSetup creates a veth pair, connects one end to the bridge,
-// and moves the other end into the container's network namespace
-// with the specified IP address.
+// and moves the other end into the container's network namespace.
+// If address is empty, the interface is brought up without an IP address
+// or default route. Otherwise, the address is assigned and a default
+// route via the derived gateway is added.
 func NetworkSetup(vethHost, vethContainer, bridgeName, address string, pid int) error {
-	// Parse the CIDR address
-	addr, err := netlink.ParseAddr(address)
-	if err != nil {
-		return fmt.Errorf("parsing address %s: %w", address, err)
+	// Parse the CIDR address if provided. Empty means no-IP mode.
+	var addr *netlink.Addr
+	if address != "" {
+		parsed, err := netlink.ParseAddr(address)
+		if err != nil {
+			return fmt.Errorf("parsing address %s: %w", address, err)
+		}
+		addr = parsed
 	}
 
 	// Find the bridge
@@ -87,7 +93,8 @@ func NetworkSetup(vethHost, vethContainer, bridgeName, address string, pid int) 
 }
 
 // configureContainerNetwork enters the container netns and configures
-// the network interface with an IP address and brings it up.
+// the network interface. If addr is nil, only the interface (and loopback)
+// is brought up; no address or default route is configured.
 func configureContainerNetwork(nsHandle netns.NsHandle, ifName string, addr *netlink.Addr) error {
 	// Save current namespace
 	origNs, err := netns.Get()
@@ -117,22 +124,26 @@ func configureContainerNetwork(nsHandle netns.NsHandle, ifName string, addr *net
 		return fmt.Errorf("finding %s in container: %w", ifName, err)
 	}
 
-	if err := netlink.AddrAdd(link, addr); err != nil {
-		return fmt.Errorf("adding address to %s: %w", ifName, err)
+	if addr != nil {
+		if err := netlink.AddrAdd(link, addr); err != nil {
+			return fmt.Errorf("adding address to %s: %w", ifName, err)
+		}
 	}
 
 	if err := netlink.LinkSetUp(link); err != nil {
 		return fmt.Errorf("setting %s up: %w", ifName, err)
 	}
 
-	// Add default route via the gateway (first IP in subnet)
-	gw := defaultGateway(addr)
-	if gw != nil {
-		route := &netlink.Route{
-			Gw: gw,
-		}
-		if err := netlink.RouteAdd(route); err != nil {
-			return fmt.Errorf("adding default route: %w", err)
+	// Add default route via the gateway only when an address was assigned.
+	if addr != nil {
+		gw := defaultGateway(addr)
+		if gw != nil {
+			route := &netlink.Route{
+				Gw: gw,
+			}
+			if err := netlink.RouteAdd(route); err != nil {
+				return fmt.Errorf("adding default route: %w", err)
+			}
 		}
 	}
 

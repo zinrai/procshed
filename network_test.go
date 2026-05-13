@@ -130,3 +130,54 @@ func TestDefaultGatewayNilIPNet(t *testing.T) {
 		t.Errorf("defaultGateway with nil IPNet = %s, want nil", got)
 	}
 }
+
+func TestValidateConfigAddressOptional(t *testing.T) {
+	// A network entry without an address must be accepted: the link is
+	// brought up but no IP is assigned.
+	tests := []struct {
+		name    string
+		address string
+		wantErr bool
+	}{
+		{
+			name:    "valid CIDR",
+			address: "10.0.1.1/24",
+			wantErr: false,
+		},
+		{
+			name:    "empty address (no-IP mode)",
+			address: "",
+			wantErr: false,
+		},
+		{
+			name:    "invalid CIDR",
+			address: "10.0.1.1/33",
+			wantErr: true,
+		},
+		{
+			name:    "not a CIDR",
+			address: "not-an-address",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				Containers: map[string]ContainerConfig{
+					"test": {
+						Rootfs:  "/", // existing directory; validateConfig stats it
+						Command: "/bin/sleep infinity",
+						Networks: []NetworkConfig{
+							{Bridge: "vm0", Address: tt.address},
+						},
+					},
+				},
+			}
+			err := validateConfig(cfg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateConfig() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
