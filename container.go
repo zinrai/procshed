@@ -20,7 +20,6 @@ type ContainerState struct {
 	PID       int    `json:"pid"`
 	StartTime uint64 `json:"start_time"`
 	Rootfs    string `json:"rootfs"`
-	Command   string `json:"command"`
 }
 
 func containerDir(name string) string {
@@ -93,7 +92,6 @@ func ContainerCreate(name string, cfg *ContainerConfig) error {
 		PID:       pid,
 		StartTime: startTime,
 		Rootfs:    cfg.Rootfs,
-		Command:   cfg.Command,
 	}
 	if err := saveState(name, state); err != nil {
 		killAndCleanup(cmd, dir)

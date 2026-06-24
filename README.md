@@ -63,7 +63,6 @@ $ sudo netshed delete -config netshed.yaml.example
 | Field | Required | Description |
 |-------|----------|-------------|
 | rootfs | yes | Path to rootfs directory (overlayfs lowerdir) |
-| command | yes | Command to run inside the container |
 | hostname | no | Container hostname (defaults to container name) |
 | networks | no | List of network connections |
 | networks[].bridge | yes | Existing bridge to connect to |
@@ -71,13 +70,12 @@ $ sudo netshed delete -config netshed.yaml.example
 
 ### Network without IP assignment
 
-To attach a container to a bridge without assigning an IP address, omit the `address` field. The veth pair is created and brought up, but no address or default route is configured inside the container. This is useful when the container is expected to assign its own address from inside (for example, from the `command` itself).
+To attach a container to a bridge without assigning an IP address, omit the `address` field. The veth pair is created and brought up, but no address or default route is configured inside the container. This is useful when the container is expected to assign its own address from inside (for example, from a process run via `exec`).
 
 ```yaml
 containers:
   raw:
     rootfs: /var/local/procshed/rootfs/bookworm
-    command: /bin/sleep infinity
     networks:
       - bridge: vm0
 ```

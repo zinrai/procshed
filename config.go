@@ -14,7 +14,6 @@ type Config struct {
 
 type ContainerConfig struct {
 	Rootfs   string          `yaml:"rootfs"`
-	Command  string          `yaml:"command"`
 	Hostname string          `yaml:"hostname"`
 	Networks []NetworkConfig `yaml:"networks"`
 }
@@ -58,10 +57,6 @@ func validateConfig(cfg *Config) error {
 		}
 		if !info.IsDir() {
 			return fmt.Errorf("container %s: rootfs %s is not a directory", name, ct.Rootfs)
-		}
-
-		if ct.Command == "" {
-			return fmt.Errorf("container %s: command is required", name)
 		}
 
 		for i, net := range ct.Networks {

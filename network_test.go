@@ -166,8 +166,7 @@ func TestValidateConfigAddressOptional(t *testing.T) {
 			cfg := &Config{
 				Containers: map[string]ContainerConfig{
 					"test": {
-						Rootfs:  "/", // existing directory; validateConfig stats it
-						Command: "/bin/sleep infinity",
+						Rootfs: "/", // existing directory; validateConfig stats it
 						Networks: []NetworkConfig{
 							{Bridge: "vm0", Address: tt.address},
 						},

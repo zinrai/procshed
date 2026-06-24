@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"syscall"
 )
@@ -102,18 +101,4 @@ func pivotRoot(newRoot string) error {
 	os.Remove("/.pivot_old")
 
 	return nil
-}
-
-// RunInContainer executes the user command inside the container.
-// This is used when the container runs a long-lived process directly.
-func RunInContainer(command string) error {
-	shell := "/bin/sh"
-	args := []string{shell, "-c", command}
-
-	binary, err := exec.LookPath(shell)
-	if err != nil {
-		return fmt.Errorf("looking up %s: %w", shell, err)
-	}
-
-	return syscall.Exec(binary, args, os.Environ())
 }
