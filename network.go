@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"net"
+	"runtime"
 
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
@@ -96,6 +97,13 @@ func NetworkSetup(vethHost, vethContainer, bridgeName, address string, pid int) 
 // the network interface. If addr is nil, only the interface (and loopback)
 // is brought up; no address or default route is configured.
 func configureContainerNetwork(nsHandle netns.NsHandle, ifName string, addr *netlink.Addr) error {
+	// netns.Set switches the network namespace of the calling OS thread, but
+	// goroutines may be migrated between threads at any safepoint. Lock this
+	// goroutine to its OS thread so the switch, the configuration, and the
+	// restore below all happen on the same thread.
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	// Save current namespace
 	origNs, err := netns.Get()
 	if err != nil {
