@@ -40,6 +40,8 @@ func main() {
 		// Re-exec entry point for child process inside namespace.
 		// This is called internally and not exposed to the user.
 		cmdInit()
+	case "version":
+		printVersion()
 	default:
 		slog.Error("unknown command", "command", os.Args[1])
 		fmt.Fprint(os.Stderr, usage)
